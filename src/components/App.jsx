@@ -8,6 +8,18 @@ import Loader from './Loader/Loader';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import './App.css';
 
+const fetchImagesFromApi = async (searchTerm, page) => {
+  const key = '36804673-b7c86e83fae38f10ed9b56d3d';
+  const url = `https://pixabay.com/api/?q=${encodeURIComponent(searchTerm)}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=12`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data; 
+  } catch (error) {
+    throw error;
+  }
+};
+
 class App extends React.Component {
   state = {
     images: [],
@@ -33,20 +45,14 @@ class App extends React.Component {
   };
 
   fetchImages = async (searchTerm, page = 1) => {
-    const key = '36804673-b7c86e83fae38f10ed9b56d3d';
-    const url = `https://pixabay.com/api/?q=${encodeURIComponent(
-      searchTerm
-    )}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=12`;
-
     this.setState({ loading: true });
 
     try {
-      const {hits,totalHits} = (await axios.get(url)).data;
-      const images = hits;
+      const { hits, totalHits } = await fetchImagesFromApi(searchTerm, page);
       this.setState(prevState => ({
-        images: page === 1 ? images : [...prevState.images, ...images],
+        images: page === 1 ? hits : [...prevState.images, ...hits],
         loading: false,
-        showButton: Math.ceil(totalHits / 12) <= page ? true : false,
+        showButton: Math.ceil(totalHits / 12) <= page ? false : true,
       }));
     } catch (error) {
       console.error('Error fetching images:', error);
@@ -63,13 +69,13 @@ class App extends React.Component {
   };
 
   render() {
-    const { images, loading,showButton } = this.state;
+    const { images, loading, showButton } = this.state;
     return (
       <div className="App">
         <Searchbar onSubmit={this.handleSearchSubmit} />
         <ImageGallery images={images} openLightbox={this.openLightbox} />
         {loading && <Loader />}
-        {images.length > 0 && !loading && !showButton &&(
+        {images.length > 0 && !loading && showButton && (
           <Button onClick={this.handleLoadMore} />
         )}
       </div>
