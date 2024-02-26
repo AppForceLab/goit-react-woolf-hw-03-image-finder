@@ -44,7 +44,7 @@ class App extends React.Component {
       const {hits,totalHits} = (await axios.get(url)).data;
       const images = hits;
       this.setState(prevState => ({
-        images: [...prevState.images, ...images],
+        images: page === 1 ? images : [...prevState.images, ...images],
         loading: false,
         showButton: Math.ceil(totalHits / 12) <= page ? true : false,
       }));
