@@ -8,17 +8,14 @@ import Loader from './Loader/Loader';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import './App.css';
 
+
 const fetchImagesFromApi = async (searchTerm, page) => {
   const key = '36804673-b7c86e83fae38f10ed9b56d3d';
   const url = `https://pixabay.com/api/?q=${encodeURIComponent(searchTerm)}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=12`;
-
-  try {
-    const response = await axios.get(url);
-    return response.data; 
-  } catch (error) {
-    throw error;
-  }
+    const {data} = await axios.get(url);
+    return data; 
 };
+
 
 class App extends React.Component {
   state = {
@@ -52,7 +49,7 @@ class App extends React.Component {
       this.setState(prevState => ({
         images: page === 1 ? hits : [...prevState.images, ...hits],
         loading: false,
-        showButton: Math.ceil(totalHits / 12) <= page ? false : true,
+        showButton: page < Math.ceil(totalHits / 12)
       }));
     } catch (error) {
       console.error('Error fetching images:', error);
