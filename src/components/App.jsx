@@ -16,7 +16,17 @@ class App extends React.Component {
     loading: false,
     showModal: false,
     modalImageSrc: '',
+    showButton: false,
   };
+
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      prevState.searchTerm !== this.state.searchTerm ||
+      prevState.currentPage !== this.state.currentPage
+    ) {
+      this.fetchImages(this.state.searchTerm, this.state.currentPage);
+    }
+  }
 
   openLightbox = imageSrc => {
     Fancybox.show([{ src: imageSrc, type: 'image' }]);
@@ -31,12 +41,12 @@ class App extends React.Component {
     this.setState({ loading: true });
 
     try {
-      const response = await axios.get(url);
-      const images = response.data.hits;
+      const {hits,totalHits} = (await axios.get(url)).data;
+      const images = hits;
       this.setState(prevState => ({
-        images: page === 1 ? images : [...prevState.images, ...images],
-        currentPage: page,
+        images: [...prevState.images, ...images],
         loading: false,
+        showButton: Math.ceil(totalHits / 12) <= page ? true : false,
       }));
     } catch (error) {
       console.error('Error fetching images:', error);
@@ -45,24 +55,21 @@ class App extends React.Component {
   };
 
   handleSearchSubmit = searchTerm => {
-    this.setState({ searchTerm, currentPage: 1 }, () => {
-      this.fetchImages(searchTerm);
-    });
+    this.setState({ searchTerm, currentPage: 1 });
   };
 
   handleLoadMore = () => {
-    const { searchTerm, currentPage } = this.state;
-    this.fetchImages(searchTerm, currentPage + 1);
+    this.setState(prevState => ({ currentPage: prevState.currentPage + 1 }));
   };
 
   render() {
-    const { images, loading } = this.state;
+    const { images, loading,showButton } = this.state;
     return (
       <div className="App">
         <Searchbar onSubmit={this.handleSearchSubmit} />
         <ImageGallery images={images} openLightbox={this.openLightbox} />
         {loading && <Loader />}
-        {images.length > 0 && !loading && (
+        {images.length > 0 && !loading && !showButton &&(
           <Button onClick={this.handleLoadMore} />
         )}
       </div>
