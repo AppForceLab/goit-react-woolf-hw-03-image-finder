@@ -1,21 +1,12 @@
 import React from 'react';
-import axios from 'axios';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Button from './Button/Button';
 import { Fancybox } from '@fancyapps/ui';
 import Loader from './Loader/Loader';
+import fetchImagesFromApi from 'api/api';
 import '@fancyapps/ui/dist/fancybox/fancybox.css';
 import './App.css';
-
-
-const fetchImagesFromApi = async (searchTerm, page) => {
-  const key = '36804673-b7c86e83fae38f10ed9b56d3d';
-  const url = `https://pixabay.com/api/?q=${encodeURIComponent(searchTerm)}&page=${page}&key=${key}&image_type=photo&orientation=horizontal&per_page=12`;
-    const {data} = await axios.get(url);
-    return data; 
-};
-
 
 class App extends React.Component {
   state = {
@@ -47,9 +38,9 @@ class App extends React.Component {
     try {
       const { hits, totalHits } = await fetchImagesFromApi(searchTerm, page);
       this.setState(prevState => ({
-        images: page === 1 ? hits : [...prevState.images, ...hits],
+        images: [...prevState.images, ...hits],
         loading: false,
-        showButton: page < Math.ceil(totalHits / 12)
+        showButton: page < Math.ceil(totalHits / 12),
       }));
     } catch (error) {
       console.error('Error fetching images:', error);
@@ -58,7 +49,7 @@ class App extends React.Component {
   };
 
   handleSearchSubmit = searchTerm => {
-    this.setState({ searchTerm, currentPage: 1 });
+    this.setState({ searchTerm, currentPage: 1, images: [] });
   };
 
   handleLoadMore = () => {
@@ -72,7 +63,7 @@ class App extends React.Component {
         <Searchbar onSubmit={this.handleSearchSubmit} />
         <ImageGallery images={images} openLightbox={this.openLightbox} />
         {loading && <Loader />}
-        {images.length > 0 && !loading && showButton && (
+        {showButton && (
           <Button onClick={this.handleLoadMore} />
         )}
       </div>
